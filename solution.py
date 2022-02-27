@@ -53,8 +53,8 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         icmpHeader = recPacket[20:28]
         icmpType, icmpCode, icmpChecksum, icmpID, icmpSequence = struct.unpack("bbHHh", icmpHeader) 
         if type != 8 and icmpID == ID:
-            bytesInDouble = struct.calcsize('d')
-            timeSent = struct.unpack('d', recPacket[28:28 + bytesInDouble])[0]
+            bytesInDouble = struct.calcsize("d")
+            timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
             return timeReceived - timeSent
             timeLeft = timeLeft - howLongInSelect     
 
@@ -77,7 +77,7 @@ def sendOnePing(mySocket, destAddr, ID):
 
     # Get the right checksum, and put in the header
 
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         # Convert 16-bit integers from host to network  byte order
         myChecksum = htons(myChecksum) & 0xffff
     else:
