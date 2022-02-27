@@ -5,6 +5,7 @@ import struct
 import time
 import select
 import binascii
+from typing import Sequence
 # Should use stdev
 
 ICMP_ECHO_REQUEST = 8
@@ -43,6 +44,9 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         howLongInSelect = (time.time() - startedSelect)
         if whatReady[0] == []:  # Timeout
             return "Request timed out."
+            
+        timeReceived = time.time()
+        recPacket, addr = mySocket.recvFrom(1024)
 
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
@@ -50,7 +54,14 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         # Fill in start
 
         # Fetch the ICMP header from the IP packet
-
+        ICMPHeader = recPacket[20:28]
+        Type, Code, checksum, packetID, Sequence = struct.unpack('bbHHh', ICMPHeader)
+        if packetID == ID:
+            BytesInDouble = struct.calcsize('d')
+            timeSent = struct.unpack('d',recPacket[28:28])[0]
+            return timeReceived -timeSent
+        else:
+            return 'Different ID'
         # Fill in end
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
@@ -91,6 +102,7 @@ def doOnePing(destAddr, timeout):
 
 
     # SOCK_RAW is a powerful socket type. For more details:   http://sockraw.org/papers/sock_raw
+    #Fill in start ms.
     mySocket = socket(AF_INET, SOCK_RAW, icmp)
 
     myID = os.getpid() & 0xFFFF  # Return the current process i
