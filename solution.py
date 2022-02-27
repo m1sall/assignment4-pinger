@@ -37,7 +37,7 @@ def checksum(string):
 def receiveOnePing(mySocket, ID, timeout, destAddr):
     timeLeft = timeout
 
-    while 1:
+    while True:
         startedSelect = time.time()
         whatReady = select.select([mySocket], [], [], timeLeft)
         howLongInSelect = (time.time() - startedSelect)
@@ -48,16 +48,14 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         recPacket, addr = mySocket.recvfrom(1024)
 
         # Fill in start
-
         # Fetch the ICMP header from the IP packet
         icmpHeader = recPacket[20:28]
-        icmpType, icmpCode, icmpChecksum, icmpID, icmpSequence = struct.unpack("bbHHh", icmpHeader) 
-        if type != 8 and icmpID == ID:
+        type, code, Checksum, packetID, sequence = struct.unpack("bbHHh", icmpHeader) 
+        if packetID == ID:
             bytesInDouble = struct.calcsize("d")
             timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
             return timeReceived - timeSent
-            timeLeft = timeLeft - howLongInSelect     
-
+        timeLeft = timeLeft - howLongInSelect
 
         # Fill in end
         if timeLeft <= 0:
