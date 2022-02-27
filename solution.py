@@ -50,9 +50,16 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         # Fill in start
 
         # Fetch the ICMP header from the IP packet
+        icmpHeader = recPacket[20:28]
+        icmpType, icmpCode, icmpChecksum, icmpID, icmpSequence = struct.unpack("bbHHh", icmpHeader) 
+        if type != 8 and icmpID == ID:
+            bytesInDouble = struct.calcsize('d')
+            timeSent = struct.unpack('d', recPacket[28:28 + bytesInDouble])[0]
+            return timeReceived - timeSent
+            timeLeft = timeLeft - howLongInSelect     
+
 
         # Fill in end
-        timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
             return "Request timed out."
 
