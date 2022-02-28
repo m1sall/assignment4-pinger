@@ -1,6 +1,4 @@
 from audioop import avg
-from distutils.filelist import glob_to_re
-import errno
 from socket import *
 import os
 from statistics import stdev
@@ -18,14 +16,17 @@ def checksum(string):
     csum = 0
     countTo = (len(string) // 2) * 2
     count = 0
+
     while count < countTo:
         thisVal = (string[count + 1]) * 256 + (string[count])
         csum = csum + thisVal
         csum = csum & 0xffffffff
         count = count + 2
+
     if countTo < len(string):
         csum = csum + (string[len(string) - 1])
         csum = csum & 0xffffffff
+
     csum = (csum >> 16) + (csum & 0xffff)
     csum = csum + (csum >> 16)
     answer = ~csum
@@ -36,23 +37,28 @@ def checksum(string):
 
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
-    global packageRev, timeRTT
+
     timeLeft = timeout
+
     while 1:
+
      startedSelect = time.time()
     whatReady = select.select([mySocket], [], [], timeLeft)
     howLongInSelect = (time.time() - startedSelect)
     if whatReady[0] == []: # Timeout
      return "Request timed out."
+
     timeReceived = time.time()
     recPacket, addr = mySocket.recvfrom(1024)
+
     #Fill in start
     #Fetch the ICMP header from the IP packet
     icmph = recPacket[20:28]
-    type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)  
+    type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
+  
     print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
     if pID == ID:
-       bytesinDbl = struct.calcsize("d")
+     bytesinDbl = struct.calcsize("d")
     timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
     rtt = timeReceived - timeSent
     print ("RTT is : ")
@@ -60,10 +66,9 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
     # Fill in end
     timeLeft = timeLeft - howLongInSelect
     if timeLeft <= 0:
-       print ("Request timed out.")
+         print ("Request timed out.")
 
 def sendOnePing(mySocket, destAddr, ID):
-    global packageSent
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
     myChecksum = 0
     # Make a dummy header with a 0 checksum
@@ -75,9 +80,9 @@ def sendOnePing(mySocket, destAddr, ID):
     # Get the right checksum, and put in the header
     if sys.platform == 'darwin':
             # Convert 16-bit integers from host to network  byte order
-            myChecksum = htons(socket(myChecksum) & 0xffff)
+            myChecksum = htons(socket(myChecksum) & 0xffff)        
     else:
-        myChecksum = htons(myChecksum)
+            myChecksum = htons(myChecksum)
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
     mySocket.sendto(packet, (destAddr, 1))  # AF_INET address must be tuple, not str
