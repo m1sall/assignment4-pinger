@@ -41,12 +41,12 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
     timeLeft = timeout
 
     while 1:
-
-     startedSelect = time.time()
+        startedSelect = time.time()
     whatReady = select.select([mySocket], [], [], timeLeft)
     howLongInSelect = (time.time() - startedSelect)
-    if whatReady[0] == []: # Timeout
-     return "Request timed out."
+    if whatReady[0] == []:
+        #Time out
+        return "Request timed out."
 
     timeReceived = time.time()
     recPacket, addr = mySocket.recvfrom(1024)
@@ -70,24 +70,25 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
 
 def sendOnePing(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
-    myChecksum = 0
+    Checksum = 0
     # Make a dummy header with a 0 checksum
     # struct -- Interpret strings as packed binary data
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, Checksum, ID, 1)
     data = struct.pack("d", time.time())
     # Calculate the checksum on the data and the dummy header.
-    myChecksum = checksum(header + data)
+    Checksum = checksum(header + data)
     # Get the right checksum, and put in the header
     if sys.platform == 'darwin':
-            # Convert 16-bit integers from host to network  byte order
-            myChecksum = htons(socket(myChecksum) & 0xffff)        
-    else:
-            myChecksum = htons(myChecksum)
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
+        myChecksum = socket.htons(myChecksum) & 0xffff 
+    # Convert 16-bit integers from host to network  byte order       
+    else: 
+        Checksum=htons(Checksum)
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, Checksum, ID, 1)
     packet = header + data
     mySocket.sendto(packet, (destAddr, 1))  # AF_INET address must be tuple, not str
     # Both LISTS and TUPLES consist of a number of objects
     # which can be referenced by their position number within the object.
+    packageSent = 1
 
 def doOnePing(destAddr, timeout):
     icmp = getprotobyname("icmp")
