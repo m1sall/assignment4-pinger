@@ -1,5 +1,6 @@
 from audioop import avg
 from distutils.filelist import glob_to_re
+import errno
 from socket import *
 import os
 from statistics import stdev
