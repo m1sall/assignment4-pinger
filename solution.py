@@ -38,60 +38,68 @@ def checksum(string):
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
 
-    timeLeft = timeout
+   timeLeft = timeout
 
-    while 1:
-        startedSelect = time.time()
-    whatReady = select.select([mySocket], [], [], timeLeft)
-    howLongInSelect = (time.time() - startedSelect)
-    if whatReady[0] == []:
-        #Time out
-        return "Request timed out."
+   while 1:
 
-    timeReceived = time.time()
-    recPacket, addr = mySocket.recvfrom(1024)
+    startedSelect = time.time()
+   whatReady = select.select([mySocket], [], [], timeLeft)
+   howLongInSelect = (time.time() - startedSelect)
+   if whatReady[0] == []: # Timeout
+    return "Request timed out."
 
-    #Fill in start
-    #Fetch the ICMP header from the IP packet
-    icmph = recPacket[20:28]
-    type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
+   timeReceived = time.time()
+   recPacket, addr = mySocket.recvfrom(1024)
+
+  #Fill in start
+  #Fetch the ICMP header from the IP packet
+   icmph = recPacket[20:28]
+   type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
   
-    print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
-    if pID == ID:
-     bytesinDbl = struct.calcsize("d")
-    timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
-    rtt = timeReceived - timeSent
-    print ("RTT is : ")
-    return (rtt)   
-    # Fill in end
-    timeLeft = timeLeft - howLongInSelect
-    if timeLeft <= 0:
-         print ("Request timed out.")
+   print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
+   if pID == ID:
+    bytesinDbl = struct.calcsize("d")
+   timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
+   rtt = timeReceived - timeSent
+   print ("RTT is : ")
+   return (rtt)
+   
+  # Fill in end
+
+   timeLeft = timeLeft - howLongInSelect
+   if timeLeft <= 0:
+    print ("Request timed out.")
 
 def sendOnePing(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
-    Checksum = 0
+
+    myChecksum = 0
     # Make a dummy header with a 0 checksum
     # struct -- Interpret strings as packed binary data
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, Checksum, ID, 1)
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     data = struct.pack("d", time.time())
     # Calculate the checksum on the data and the dummy header.
-    Checksum = checksum(header + data)
+    myChecksum = checksum(header + data)
+
     # Get the right checksum, and put in the header
+
     if sys.platform == 'darwin':
-        myChecksum = socket.htons(myChecksum) & 0xffff 
-    # Convert 16-bit integers from host to network  byte order       
-    else: 
-        Checksum=htons(Checksum)
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, Checksum, ID, 1)
+            # Convert 16-bit integers from host to network  byte order
+            myChecksum = htons(socket(myChecksum) & 0xffff)
+    else:
+            myChecksum = htons(myChecksum)
+
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
+
     mySocket.sendto(packet, (destAddr, 1))  # AF_INET address must be tuple, not str
+
     # Both LISTS and TUPLES consist of a number of objects
     # which can be referenced by their position number within the object.
-    packageSent = 1
 
 def doOnePing(destAddr, timeout):
     icmp = getprotobyname("icmp")
+
     # SOCK_RAW is a powerful socket type. For more details:   http://sockraw.org/papers/sock_raw
     mySocket = socket(AF_INET, SOCK_RAW, icmp)
     myID = os.getpid() & 0xFFFF  # Return the current process i
