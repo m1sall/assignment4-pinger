@@ -34,16 +34,17 @@ def checksum(string):
     answer = answer >> 8 | (answer << 8 & 0xff00)
     return answer
 
+
+
 def receiveOnePing(mySocket, ID, timeout, destAddr):
     global packageRev,timeRTT
     timeLeft = timeout
-    timeRTT = 0
     while 1:
         startedSelect = time.time()
         whatReady = select.select([mySocket], [], [], timeLeft)
         howLongInSelect = (time.time() - startedSelect)
         if whatReady[0] == []: # Timeout
-            return "0: Request time out."
+            return "0: Destination Network Unreachable,"
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
         #Fill in start
@@ -57,11 +58,11 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
             packageRev = 1
             return timeReceived - timeData
         else:
-            return "ID is different!"
+            return "ID is not the same!"
         #Fill in end
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
-            return "1: You cannot reach the Destination Host ."
+            return "1: Destination Host Unreachable."
 
 def sendOnePing(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
