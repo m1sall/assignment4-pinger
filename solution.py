@@ -114,21 +114,21 @@ def ping(host, timeout=1):
     # Calculate vars values  and returm them
         
     # Send ping requests to a server separated by approximately one second
-    list = []*1000
+    vars = []*1000
     for i in range(0,4):
 
         vars = doOnePing(dest, timeout)
         print(round(vars,2))
-        list.append(0)
+        list(0,1,2,3)
         time.sleep(1)  # Time to sleep equals one second
         
-    packet_min = min(list)*1000
-    packet_max = max(list)*1000
-    packet_avg = statistics.mean(list)*1000
-    stdev_var = (list)*1000
+    packet_min = min[vars]*1000
+    packet_max = max[vars]*1000
+    packet_avg = statistics.mean[vars]*1000
+    stdev_var = [vars]*1000
     vars = ([str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(statistics.stdev(stdev_var), 2))])
       
     return vars
 
 if __name__ == '__main__':
-    ping("google.co.il")
+    new_var = ping("google.co.il")
