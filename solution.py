@@ -1,3 +1,4 @@
+from ast import Try
 from socket import *
 import os
 import sys
@@ -100,15 +101,15 @@ def ping(host, timeout=1):
     #timeout=1 means: If one second goes by without a reply from the server,
     dest = socket.gethostbyname(host)
     print ("Pinging " + dest + " using Python:")
-    print ("")
+    print ("") 
     #Send ping requests to a server separated by approximately one second
     while 1 :
         delay = doOnePing(dest, timeout)
         print ("RTT:",delay)
-        print ("maxRTT:", (max(timeRTT) if len(timeRTT) > 0 else 0), "\tminRTT:", (min(timeRTT) if len(timeRTT) > 0 else 0), "\naverageRTT:", float(sum(timeRTT)/len(timeRTT) if len(timeRTT) > 0 else float("nan")))
-        print ("Package Lose Rate:", ((packageSent - packageRev)/packageSent if packageRev > 0 else 0))
+        print ("maxRTT:"), (max(timeRTT) if len(timeRTT) > 0 else 0), "\tminRTT:", (min(timeRTT) if len(timeRTT) > 0 else 0), "\naverageRTT:", float(sum(timeRTT)/len(timeRTT) if len(timeRTT) > 0 else float("nan"))
+        print ("Package Lose Rate:"), ((packageSent - packageRev)/packageSent if packageRev > 0 else 0)
         time.sleep(1)# one second
-    return vars
+    return delay
 
 if __name__ == '__main__':
     ping("google.co.il")
