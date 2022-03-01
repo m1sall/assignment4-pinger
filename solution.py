@@ -101,24 +101,29 @@ def doOnePing(destAddr, timeout):
     mySocket.close()
     return delay
 def ping(host, timeout=1):
-    #timeout=1 means: If one second goes by without a reply from the server,
-    dest = socket.gethostbyname(host)
-    print ("Pinging " + dest + " using Python:")
-    print ("") 
-    #Send ping requests to a server separated by approximately one second    
+    # timeout=1 means: If one second goes by without a reply from the server,  	# the client assumes that either the client's ping or the server's pong is lost
+    dest = gethostbyname(host)
+    print("Pinging " + dest + " using Python:")
+    print("")    
+    # Calculate vars values and return them    
+    # Send ping requests to a server separated by approximately one second
     list = []*1000
-    for i in range(0,4) :
+    
+    for i in range(0,4):
+
         delay = doOnePing(dest, timeout)
-        print (delay)
+        print(delay)
         list.append(delay)
-        time.sleep(1)# one second
+
+        time.sleep(1)  # one second
+        
     packet_min = min(list)*1000
     packet_max = max(list)*1000
     packet_avg = statistics.mean(list)*1000
     stdev_var = (list)*1000
-    vars = (str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(statistics.stdev(stdev_var), 2)))
-
-    return delay
+    vars = ([str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(statistics.stdev(stdev_var), 2))])
+      
+    return vars
 
 if __name__ == '__main__':
     ping("google.co.il")
