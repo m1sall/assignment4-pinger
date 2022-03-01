@@ -38,35 +38,34 @@ def checksum(string):
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
 
-   timeLeft = timeout
+    timeLeft = timeout
 
-   while 1:
+    while 1:
+        startedSelect = time.time()
+    whatReady = select.select([mySocket], [], [], timeLeft)
+    howLongInSelect = (time.time() - startedSelect)
+    if whatReady[0] == []: # Timeout
+       return "Request timed out."
 
-    startedSelect = time.time()
-   whatReady = select.select([mySocket], [], [], timeLeft)
-   howLongInSelect = (time.time() - startedSelect)
-   if whatReady[0] == []: # Timeout
-    return "Request timed out."
-
-   timeReceived = time.time()
-   recPacket, addr = mySocket.recvfrom(1024)
+    timeReceived = time.time()
+    recPacket, addr = mySocket.recvfrom(1024)
 
   #Fill in start
   #Fetch the ICMP header from the IP packet
-   icmph = recPacket[20:28]
-   type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
+    icmph = recPacket[20:28]
+    type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
   
-   print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
-   if pID == ID:
-    bytesinDbl = struct.calcsize("d")
-   timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
-   rtt = timeReceived - timeSent
-   print ("RTT is : ")
-   return (rtt)   
+    print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
+    if pID == ID:
+        bytesinDbl = struct.calcsize("d")
+    timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
+    rtt = timeReceived - timeSent
+    print ("RTT is : ")
+    return (rtt)   
   # Fill in end
-   timeLeft = timeLeft - howLongInSelect
-   if timeLeft <= 0:
-    print ("Request timed out.")
+    timeLeft = timeLeft - howLongInSelect
+    if timeLeft <= 0:
+        print ("Request timed out.")
 
 def sendOnePing(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
