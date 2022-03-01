@@ -1,6 +1,8 @@
 from ast import Try
 from socket import *
 import os
+from statistics import stdev
+import statistics
 import sys
 import struct
 import time
@@ -102,13 +104,18 @@ def ping(host, timeout=1):
     dest = socket.gethostbyname(host)
     print ("Pinging " + dest + " using Python:")
     print ("") 
-    #Send ping requests to a server separated by approximately one second
-    while 1 :
+    #Send ping requests to a server separated by approximately one second    
+    list = []*1000
+    for i in range(0,4) :
         delay = doOnePing(dest, timeout)
-        print ("RTT:",delay)
-        print ("maxRTT:"), (max(timeRTT) if len(timeRTT) > 0 else 0), "\tminRTT:", (min(timeRTT) if len(timeRTT) > 0 else 0), "\naverageRTT:", float(sum(timeRTT)/len(timeRTT) if len(timeRTT) > 0 else float("nan"))
-        print ("Package Lose Rate:"), ((packageSent - packageRev)/packageSent if packageRev > 0 else 0)
+        print (delay)
+        list.append(delay)
         time.sleep(1)# one second
+    packet_min = min(list)*1000
+    packet_max = max(list)*1000
+    packet_avg = statistics.mean(list)*1000
+    stdev_var = (list)*1000
+
     return delay
 
 if __name__ == '__main__':
