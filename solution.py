@@ -18,11 +18,13 @@ def checksum(str):
     csum = 0
     countTo = (len(str) / 2) * 2
     count = 0
+
     while count < countTo:
         thisVal = (str[count+1]) * 256 + (str[count])
         csum = csum + thisVal
         csum = csum & 0xffffffff
         count = count + 2
+
     if countTo < len(str):
         csum = csum + ord(str[len(str) - 1])
         csum = csum & 0xffffffff
@@ -32,33 +34,35 @@ def checksum(str):
     answer = answer & 0xffff
     answer = answer >> 8 | (answer << 8 & 0xff00)
     return answer
+
 def receiveOnePing(mySocket, ID, timeout, destAddr):
-    global packageRev,timeRTT
     timeLeft = timeout
+
     while 1:
         startedSelect = time.time()
         whatReady = select.select([mySocket], [], [], timeLeft)
         howLongInSelect = (time.time() - startedSelect)
-        if whatReady[0] == []: # Timeout
-            return "0: Destination Network Unreachable,"
+        if whatReady[0] == []: # Timeout duration
+            return "0: Request timed out, oops!,"
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
         #Fill in start
-        #Fetch the ICMP header from the IP packet
         icmpHeader = recPacket[20:28]
-        requestType, code, revChecksum, revId, revSequence = struct.unpack('bbHHh',icmpHeader)
-        if ID == revId:
-            bytesInDouble = struct.calcsize('d')
-            timeData = struct.unpack('d',recPacket[28:28 + bytesInDouble])[0]
-            timeRTT.append(timeReceived - timeData)
-            packageRev += 1
-            return timeReceived - timeData
-        else:
-            return "ID is not the same!"
+        icmpType, code, myChecksum, packageId, sequence = struct.unpack('bbHHh',icmpHeader)
+        if icmpType == 0 and packageId == ID:
+            bytesInDouble = struct.calcsize("d")
+            timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
+            timeRTT.append(timeReceived - timeSent)
+            return timeReceived - timeSent
+        #Fetch the ICMP header from the IP packet
+        rtt = timeout
+        rtt_min = min(timeout)
+
         #Fill in end
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
             return "1: Destination Host Unreachable."
+
 def sendOnePing(mySocket, destAddr, ID):
     global packageSent
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
@@ -71,10 +75,11 @@ def sendOnePing(mySocket, destAddr, ID):
     myChecksum = checksum(header + data)
     # Get the right checksum, and put in the header
     if sys.platform == 'darwin':
-        myChecksum = socket.htons(myChecksum) & 0xffff
-        #Convert 16-bit integers from host to network byte order.
+    #Convert 16-bit integers from host to network byte order.
+        myChecksum = htons(myChecksum) & 0xffff
     else:
         myChecksum = socket.htons(myChecksum)
+    
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
     mySocket.sendto(packet, (destAddr, 1))
@@ -100,22 +105,22 @@ def doOnePing(destAddr, timeout):
     delay = receiveOnePing(mySocket, myID, timeout, destAddr)
     mySocket.close()
     return delay
+
 def ping(host, timeout=1):
     # timeout=1 means: If one second goes by without a reply from the server,  	# the client assumes that either the client's ping or the server's pong is lost
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
     print("")    
-    # Calculate vars values and return them    
+    # Calculate vars values  and returm them
+        
     # Send ping requests to a server separated by approximately one second
     list = []*1000
-    
     for i in range(0,4):
 
         delay = doOnePing(dest, timeout)
         print(delay)
-        list.append(delay)
-
-        time.sleep(1)  # one second
+        list.append(0)
+        time.sleep(1)  # Time to sleep equals one second
         
     packet_min = min(list)*1000
     packet_max = max(list)*1000
