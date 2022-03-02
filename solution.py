@@ -23,7 +23,7 @@ def checksum(str):
         count = count + 2
 
     if countTo < len(str):
-        csum = csum + ord(str[len(str) - 1])
+        csum = csum + (str[len(str) - 1])
         csum = csum & 0xffffffff
     csum = (csum >> 16) + (csum & 0xffff)
     csum = csum + (csum >> 16)
@@ -48,7 +48,7 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         type, code, checksum, id, sequence = struct.unpack('bbHHh',recPacket[20:28])
         if type != 0:
             return'expected type=0, but got {}'.format(type)
-        if  code != 0:
+        if code != 0:
             return 'expected type=0, but got {}'.format(code)
         if ID != id:
             return 'expected type=0, but got {}'.format(ID, id)
