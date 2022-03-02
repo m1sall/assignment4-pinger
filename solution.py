@@ -1,7 +1,10 @@
 from audioop import avg
+import code
+from msilib import sequence
 from socket import *
 import os
 from statistics import stdev
+import statistics
 import sys
 import struct
 import time
@@ -34,41 +37,33 @@ def checksum(string):
     answer = answer >> 8 | (answer << 8 & 0xff00)
     return answer
 
-
-
 def receiveOnePing(mySocket, ID, timeout, destAddr):
-
+   global packageRev,timeRTT
    timeLeft = timeout
-
    while 1:
-
-    startedSelect = time.time()
-   whatReady = select.select([mySocket], [], [], timeLeft)
-   howLongInSelect = (time.time() - startedSelect)
-   if whatReady[0] == []: # Timeout
-    return "Request timed out."
-
-   timeReceived = time.time()
-   recPacket, addr = mySocket.recvfrom(1024)
-
-  #Fill in start
-  #Fetch the ICMP header from the IP packet
-   icmph = recPacket[20:28]
-   type, code, checksum, pID, sq = struct.unpack("bbHHh", icmph)
-  
-   print("The header received in the ICMP reply is ",type, code, checksum, pID, sq)
-   if pID == ID:
-    bytesinDbl = struct.calcsize("d")
-   timeSent = struct.unpack("d", recPacket[28:28 + bytesinDbl])[0]
-   rtt = timeReceived - timeSent
-   print ("RTT is : ")
-   return (rtt)
+        startedSelect = time.time()
+        whatReady = select.select([mySocket], [], [], timeLeft)
+        howLongInSelect = (time.time() - startedSelect)
+        if whatReady[0] == []: # Timeout
+            return "Request timed out."
+        timeReceived = time.time()
+        recPacket, addr = mySocket.recvfrom(1024)
+        # Fill in start
+        
+        # #Fetch the ICMP header from the IP packet
+        icmpHeader = recPacket[20:28]
+        type, code, checksum, packetID, sequence = struct.unpack("bbHHh", icmpHeader)
+        if packetID == ID:
+            bytesInDouble = struct.calcsize("d")
+            timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
+            rtt = timeReceived - timeSent
+            print(" ")
+            return rtt
    
-  # Fill in end
-
-   timeLeft = timeLeft - howLongInSelect
-   if timeLeft <= 0:
-    print ("Request timed out.")
+        # Fill in end
+        timeLeft = timeLeft - howLongInSelect
+        if timeLeft <= 0:
+            print ("Request timed out.")
 
 def sendOnePing(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
@@ -114,6 +109,18 @@ def ping(host, timeout=1):
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
     # Calculate vars values and return them
+    list = []*1000
+    for i in range(0,4) :
+        delay = doOnePing(dest, timeout)
+        print (delay)
+        list.append(0)
+        time.sleep(1)# one second
+    packet_min = min(list)*1000
+    packet_max = max(list)*1000
+    packet_avg = statistics.mean(list)*1000
+    stdev_var = (list)*1000
+    delay = ((round(packet_min, 2)), (round(packet_avg, 2)), (round(packet_max, 2)),(round(stdev(stdev_var), 2)))
+
     # Send ping requests to a server separated by approximately one second
     while 1 :
         delay = doOnePing(dest, timeout)
