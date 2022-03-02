@@ -1,6 +1,3 @@
-from audioop import avg
-import code
-from msilib import sequence
 from socket import *
 import os
 from statistics import stdev
