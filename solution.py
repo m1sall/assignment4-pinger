@@ -1,8 +1,5 @@
-from ast import Try
-from audioop import avg
 from socket import *
 import os
-from statistics import stdev
 import statistics
 import sys
 import struct
@@ -20,7 +17,7 @@ def checksum(str):
     count = 0
 
     while count < countTo:
-        thisVal = (str[count+1]) * 256 + (str[count])
+        thisVal = ord(str[count+1]) * 256 + ord(str[count])
         csum = csum + thisVal
         csum = csum & 0xffffffff
         count = count + 2
@@ -36,8 +33,8 @@ def checksum(str):
     return answer
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
+    global rtt_min, rtt_max, rtt_sum, rtt_cnt
     timeLeft = timeout
-
     while 1:
         startedSelect = time.time()
         whatReady = select.select([mySocket], [], [], timeLeft)
@@ -47,21 +44,32 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
         #Fill in start
-        icmpHeader = recPacket[20:28]
-        icmpType, code, myChecksum, packageId, sequence = struct.unpack('bbHHh',icmpHeader)
-        if icmpType == 0 and packageId == ID:
-            bytesInDouble = struct.calcsize("d")
-            timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
-            timeRTT.append(timeReceived - timeSent)
-            return timeReceived - timeSent
-        #Fetch the ICMP header from the IP packet
-        rtt = timeout
-        rtt_min = min(timeout)
+        #Fectch the ICMP header from the IP packet
+        type, code, checksum, id, sequence = struct.unpack('bbHHh',recPacket[20:28])
+        if type != 0:
+            return'expected type=0, but got {}'.format(type)
+        if  code != 0:
+            return 'expected type=0, but got {}'.format(code)
+        if ID != id:
+            return 'expected type=0, but got {}'.format(ID, id)
+        send_time, = struct.unpack('d', recPacket[28:])
 
+        rtt = (timeReceived - send_time) * 1000
+        rtt_cnt += 1
+        rtt_sum += rtt
+        rtt_min = min(rtt_min, rtt)
+        rtt_max = max(rtt_max, rtt)
+
+        ip_header =struct.unpack('!BBHHHBBH4s4s' , recPacket[:20])
+        ttl = ip_header[5]
+        saddr = socket.inet_ntoa(ip_header[8])
+        length = len(recPacket) - 20
+        return '{} bytes from {}: icmp_sequence={} ttl={} time+{:.3f} ms'.format(length, saddr, sequence, ttl, rtt)
+        
         #Fill in end
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
-            return "1: Destination Host Unreachable."
+            return "Request timed out, oops!."
 
 def sendOnePing(mySocket, destAddr, ID):
     global packageSent
@@ -74,35 +82,30 @@ def sendOnePing(mySocket, destAddr, ID):
     # Calculate the checksum on the data and the dummy header.
     myChecksum = checksum(header + data)
     # Get the right checksum, and put in the header
+        #Convert 16-bit integers from host to network byte order.
+
     if sys.platform == 'darwin':
-    #Convert 16-bit integers from host to network byte order.
         myChecksum = htons(myChecksum) & 0xffff
     else:
-        myChecksum = socket.htons(myChecksum)
+       myChecksum = socket.htons(myChecksum)
     
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
     mySocket.sendto(packet, (destAddr, 1))
-    packageSent += 1
-     # AF_INET address must be tuple, not str
+    # AF_INET address must be tuple, not str
     #Both LISTS and TUPLES consist of a number of objects
     #which can be referenced by their position number within the object
 def doOnePing(destAddr, timeout):
-    icmp = socket.getprotobyname("icmp")
+    ICMP = socket.getprotobyname("icmp")
     #SOCK_RAW is a powerful socket type. For more details see:http://sock-raw.org/papers/sock_raw
     #Fill in start
     #Create Socket here
-    errno = 1
-    msg = "Not pinging"
-    try:
-        mySocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
-    except error (errno, msg):
-        if errno == 1:
-            raise socket.error(msg)
+    mySocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, ICMP)
     #Fill in end
     myID = os.getpid() & 0xFFFF  #Return the current process i
     sendOnePing(mySocket, destAddr, myID)
     delay = receiveOnePing(mySocket, myID, timeout, destAddr)
+    
     mySocket.close()
     return delay
 
@@ -110,25 +113,24 @@ def ping(host, timeout=1):
     # timeout=1 means: If one second goes by without a reply from the server,  	# the client assumes that either the client's ping or the server's pong is lost
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
-    print("")    
     # Calculate vars values  and returm them
         
     # Send ping requests to a server separated by approximately one second
-    vars = []*1000
+    list = []*1000
     for i in range(0,4):
 
-        vars = doOnePing(dest, timeout)
-        print(round(vars,2))
-        list(0,1,2,3)
+        delay = doOnePing(dest, timeout)
+        print(delay)
+        list.append(0)
         time.sleep(1)  # Time to sleep equals one second
         
-    packet_min = min[vars]*1000
-    packet_max = max[vars]*1000
-    packet_avg = statistics.mean[vars]*1000
-    stdev_var = [vars]*1000
+    packet_min = min(list)*1000
+    packet_max = max(list)*1000
+    packet_avg = statistics.mean(list)*1000
+    stdev_var = (list)*1000
     vars = ([str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(statistics.stdev(stdev_var), 2))])
       
     return vars
 
 if __name__ == '__main__':
-    new_var = ping("google.co.il")
+    ping("google.co.il")
