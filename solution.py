@@ -42,7 +42,6 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         rtt = timeReceived - send_time
         if whatReady[0] == []: # Timeout duration
             return "0: Request timed out, oops!,"
-        timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
         #Fill in start
         #Fectch the ICMP header from the IP packet
@@ -54,6 +53,7 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         if ID != id:
             return 'expected type=0, but got {}'.format(ID, id)
         send_time, = struct.unpack('d', recPacket[28:])
+        timeReceived = time.time()
 
         rtt = (timeReceived - send_time) * 1000
         rtt_cnt += 1
