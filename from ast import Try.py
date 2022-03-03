@@ -1,5 +1,3 @@
-from ast import Try
-from audioop import avg
 from socket import *
 import os
 from statistics import stdev
@@ -115,7 +113,7 @@ def ping(host, timeout=1):
     packet_min = min(list)*1000
     packet_max = max(list)*1000
     packet_avg = max(list)*1000
-    stdev_var = statistics.stdev(list)*1000
+    stdev_var = statistics.mean(list)*1000
     vars = (((packet_min, 2)), ((packet_avg, 2)), ((packet_max, 2)),((statistics.stdev(stdev_var), 2)))
 
     return delay
