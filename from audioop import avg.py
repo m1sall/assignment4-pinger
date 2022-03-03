@@ -4,6 +4,7 @@ from msilib import sequence
 from socket import *
 import os
 from statistics import stdev
+import statistics
 import sys
 import struct
 import time
@@ -107,25 +108,25 @@ def ping(host, timeout=1):
     # timeout=1 means: If one second goes by without a reply from the server,  	# the client assumes that either the client's ping or the server's pong is lost
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
-    # Calculate vars values and return them
-    list = []*1000
+    # Calculate vars values and return them    
     for i in range(0,4) :
+        list = [0]*1000
         delay = doOnePing(dest, timeout)
         print (delay)
         list.append(i)
         time.sleep(1)# one second
     packet_min = min(list)*1000
     packet_max = max(list)*1000
-    packet_avg = max(list)*1000
+    packet_avg = statistics.mean(list)*1000
     stdev_var = (list)*1000
-    delay = (((packet_min, 2)), ((packet_avg, 2)), ((packet_max, 2)),((stdev(stdev_var), 2)))
-
+    delay = ((round(packet_min, 2)), (round(packet_avg, 2)), (round(packet_max, 2)),(round(stdev(stdev_var), 2)))
+    
     # Send ping requests to a server separated by approximately one second
     while 1 :
         delay = doOnePing(dest, timeout)
         print(delay)
         time.sleep(1)  # one second 
-    return delay
+    return vars
 
 if __name__ == '__main__':
     ping("google.co.il")
