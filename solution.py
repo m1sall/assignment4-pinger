@@ -115,8 +115,8 @@ def ping(host, timeout=1):
     packet_min = min(list)*1000
     packet_avg = statistics.mean(list)*1000
     packet_max = max(list)*1000
-    stdev_var = statistics.mean(list)*1000
-    delay = ([(round(packet_min, 2)),(round(packet_avg, 2)),(round(packet_max, 2)),(round(stdev(stdev_var), 2))])
+    stdev_var = (list)*1000
+    delay = [str(round(packet_min, 2)),str(round(packet_avg, 2)),str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
     print(delay)
     while 1:
         delay = doOnePing(dest, timeout)
