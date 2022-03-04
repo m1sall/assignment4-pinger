@@ -1,7 +1,6 @@
 from socket import *
 import os
 from statistics import stdev
-import statistics
 import sys
 import struct
 import time
@@ -125,6 +124,8 @@ def ping(host, timeout=1):
     print("Pinging " + dest + " using Python:")
     print("")
     # Calculate vars values and return them
+    #  vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
+    # Send ping requests to a server separated by approximately one second
     list = []*1000
     for i in range(0,4) :
         delay = doOnePing(dest, timeout)
@@ -132,18 +133,16 @@ def ping(host, timeout=1):
         list.append(i)
         time.sleep(1)# one second
     packet_min = min(list)*1000
-    packet_avg = statistics.mean(list)*1000
     packet_max = max(list)*1000
-    stdev_var = stdev(list)*1000
-    delay = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)), str(round(stdev(stdev_var), 2))]
-    #  vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
-    # Send ping requests to a server separated by approximately one second
+    packet_avg = max(list)*1000
+    stdev_var = (list)*1000
+    delay = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
     for i in range(0,4):
         delay = doOnePing(dest, timeout)
         print(delay)
-        time.sleep(1)  # one second
-
+        time.sleep(1)
     return vars
+
 
 if __name__ == '__main__':
     ping("google.co.il")
