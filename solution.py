@@ -60,7 +60,6 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         if timeLeft <= 0:
             return "Oops, Request timed out."
 
-
 def sendOnePing(mySocket, destAddr, ID):
     global packageSent
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
