@@ -136,7 +136,7 @@ def ping(host, timeout=1):
     packet_max = max(list)*1000
     packet_avg = max(list)*1000
     stdev_var = (list)*1000
-    delay = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
+    delay = [int(round(packet_min, 2)), int(round(packet_avg, 2)), int(round(packet_max, 2)),int(round(stdev(stdev_var), 2))]
     for i in range(0,4):
         delay = doOnePing(dest, timeout)
         print(delay)
