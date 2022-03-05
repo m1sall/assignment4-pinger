@@ -38,7 +38,7 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         whatReady = select.select([mySocket], [], [], timeLeft)
         howLongInSelect = (time.time() - startedSelect)
         if whatReady[0] == []: # Timeout
-            return "0: Destination Network Unreachable,"
+            return "Request timed out."
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
         #Fill in start
@@ -99,24 +99,30 @@ def doOnePing(destAddr, timeout):
     mySocket.close()
     return delay
 def ping(host, timeout=1):
+    global rtt_min, rtt_max, rtt_sum, rtt_cnt
+    rtt_min = float('+inf')
+    rtt_max = float('-inf')
+    rtt_sum = 0
+    rtt_cnt = 0
+    cnt = 0
     #timeout=1 means: If one second goes by without a reply from the server,
+    #the client assumes that either the client's ping or the server's pong is lost
     dest = socket.gethostbyname(host)
     print ("Pinging " + dest + " using Python:")
-    print ("") 
-    #Send ping requests to a server separated by approximately one second    
-    list = []*1000
-    for i in range(0,4) :
-        delay = doOnePing(dest, timeout)
-        print (delay)
-        list.append(i)
-        time.sleep(1)# one second
-    packet_min = min(list)*1000
-    packet_max = max(list)*1000
-    packet_avg = max(list)*1000
-    stdev_var = statistics.mean(list)*1000
-    vars = (((packet_min, 2)), ((packet_avg, 2)), ((packet_max, 2)),((statistics.stdev(stdev_var), 2)))
+    #Send ping requests to a server separated by approximately one second
+    try:
+        while True:
+            cnt += 1
+            print (doOnePing(dest, timeout))
+            time.sleep(1)
+    except KeyboardInterrupt:
+        if cnt != 0:
+            print ('--- {} ping statistics ---').format(host)
+            print ('{} packets transmitted, {} packets received, {:.1f}% packet loss').format(cnt, rtt_cnt, 100.0 - rtt_cnt * 100.0 / cnt)
+            if rtt_cnt != 0:
+                print ('round-trip min/avg/max {:.3f}/{:.3f}/{:.3f} ms').format(rtt_min, rtt_sum / rtt_cnt, rtt_max)
 
-    return delay
+    return vars
 
 if __name__ == '__main__':
     ping("google.co.il")
